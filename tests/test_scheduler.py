@@ -5,6 +5,7 @@ from datetime import datetime
 from datetime import timedelta
 from threading import Thread
 from unittest import mock
+from unittest.mock import MagicMock, patch
 
 import freezegun
 from dateutil.tz import tzlocal
@@ -39,6 +40,9 @@ class TestScheduler(RQTestCase):
     def setUp(self):
         super(TestScheduler, self).setUp()
         self.scheduler = Scheduler(connection=self.testconn)
+    
+    def tearDown(self):
+        super(TestScheduler, self).tearDown()
 
     def test_acquire_lock(self):
         """
@@ -545,9 +549,12 @@ class TestScheduler(RQTestCase):
 
     def test_crontab_schedules_correctly(self):
         # Create a job with a cronjob_string
-        now = datetime.now().replace(minute=0, hour=0, second=0, microsecond=0)
+        # NOTE: Use UTC time for consistency since cron jobs without use_local_timezone=True run in UTC
+        from dateutil.tz import UTC
+        now = datetime.now(UTC).replace(minute=0, hour=0, second=0, microsecond=0)
         with freezegun.freeze_time(now):
-            job = self.scheduler.cron("5 * * * * *", say_hello)
+            # Use 5-field cron: "5 * * * *" means "at minute 5 of every hour"
+            job = self.scheduler.cron("5 * * * *", say_hello)
 
         with mock.patch.object(self.scheduler, 'enqueue_job', wraps=self.scheduler.enqueue_job) as enqueue_job, \
                 freezegun.freeze_time(now + timedelta(minutes=5)):
@@ -556,7 +563,7 @@ class TestScheduler(RQTestCase):
             self.assertEqual(1, enqueue_job.call_count)
 
             (job, next_scheduled_time), = self.scheduler.get_jobs(with_times=True)
-            expected_scheduled_time = (now + timedelta(hours=1, minutes=5)).astimezone(UTC)
+            expected_scheduled_time = now + timedelta(hours=1, minutes=5)
             self.assertEqual(to_unix(expected_scheduled_time), to_unix(next_scheduled_time))
 
     def test_crontab_sets_timeout(self):
