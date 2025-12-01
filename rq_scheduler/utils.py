@@ -1,5 +1,5 @@
 import calendar
-from croniter import croniter
+from pychronotab import croniter
 import dateutil.tz
 
 from datetime import datetime, timedelta

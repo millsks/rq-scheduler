@@ -4,7 +4,7 @@ from setuptools import setup
 
 setup(
     name='rq-scheduler',
-    version='0.15.0',
+    version='0.14.0',
     author='Selwin Ong',
     author_email='selwin.ong@gmail.com',
     packages=['rq_scheduler'],
@@ -19,7 +19,7 @@ setup(
     rqscheduler = rq_scheduler.scripts.rqscheduler:main
     ''',
     package_data={'': ['README.rst']},
-    install_requires=['croniter>=0.3.30', 'rq>=2', 'python-dateutil', 'freezegun'],
+    install_requires=['pychronotab>=0.1.0', 'rq>=2', 'python-dateutil', 'freezegun'],
     classifiers=[
         'Development Status :: 4 - Beta',
         'Environment :: Console',
