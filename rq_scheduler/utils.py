@@ -1,5 +1,5 @@
 import calendar
-import crontab
+from pychronotab import croniter
 import dateutil.tz
 
 from datetime import datetime, timedelta
@@ -21,12 +21,21 @@ def to_unix(dt):
 
 
 def get_next_scheduled_time(cron_string, use_local_timezone=False):
-    """Calculate the next scheduled time by creating a crontab object
-    with a cron string"""
-    now = datetime.now()
-    cron = crontab.CronTab(cron_string)
-    next_time = cron.next(now=now, return_datetime=True)
-    tz = dateutil.tz.tzlocal() if use_local_timezone else dateutil.tz.UTC
+    """Calculate the next scheduled time using croniter to parse cron expressions"""
+    if use_local_timezone:
+        # Use local timezone-aware datetime
+        now = datetime.now(dateutil.tz.tzlocal())
+        tz = dateutil.tz.tzlocal()
+    else:
+        # Use UTC timezone-aware datetime
+        now = datetime.now(dateutil.tz.UTC)
+        tz = dateutil.tz.UTC
+    
+    # croniter works with timezone-aware datetimes
+    cron = croniter(cron_string, now)
+    next_time = cron.get_next(datetime)
+    
+    # Ensure the result is in the correct timezone
     return next_time.astimezone(tz)
 
 
